@@ -1,27 +1,54 @@
 import pytest
+import os
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
-import shutil
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-@pytest.fixture(params=["edge", "chrome", "firefox"])
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+
+
+@pytest.fixture(params=["chrome", "firefox", "edge"])
 def driver(request):
     browser = request.param
 
-    if browser == "edge" and not shutil.which("msedgedriver"):
-        pytest.skip("Edge WebDriver not found, skipping Edge tests")
-    if browser == "chrome" and not shutil.which("chromedriver"):
-        pytest.skip("Chrome WebDriver not found, skipping Chrome tests")
-    if browser == "firefox" and not shutil.which("geckodriver"):
-        pytest.skip("Firefox WebDriver not found, skipping Firefox tests")
+    # Detect if running in CI
+    headless = os.getenv("CI") == "true"
 
-    if browser == "edge":
-        driver = webdriver.Edge()
-    elif browser == "chrome":
-        driver = webdriver.Chrome()
+    if browser == "chrome":
+        options = ChromeOptions()
+        if headless:
+            options.add_argument("--headless=new")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+        drv = webdriver.Chrome(
+            ChromeDriverManager().install(),
+            options=options
+        )
+
     elif browser == "firefox":
-        driver = webdriver.Firefox()
+        options = FirefoxOptions()
+        if headless:
+            options.add_argument("-headless")
+        drv = webdriver.Firefox(
+            executable_path=GeckoDriverManager().install(),
+            options=options
+        )
 
-    driver.maximize_window()
-    driver.implicitly_wait(10)
-    yield driver
-    driver.quit()
+    elif browser == "edge":
+        options = EdgeOptions()
+        if headless:
+            options.add_argument("--headless=new")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+        drv = webdriver.Edge(
+            EdgeChromiumDriverManager().install(),
+            options=options
+        )
+
+    drv.implicitly_wait(10)
+    yield drv
+    drv.quit()
+
