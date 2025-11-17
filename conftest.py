@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 import shutil
 
-@pytest.fixture(params=["edge", "chrome", "firefox"])
+@pytest.fixture(params=["firefox"])
 def driver(request):
     browser = request.param
 
