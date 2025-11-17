@@ -1,43 +1,27 @@
-import os
 import pytest
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
+from selenium.common.exceptions import WebDriverException
+import shutil
 
-
-@pytest.fixture(params=["chrome", "firefox"])
+@pytest.fixture(params=["edge", "chrome", "firefox"])
 def driver(request):
     browser = request.param
 
-    headless = os.getenv("CI") == "true"
+    # if browser == "edge" and not shutil.which("msedgedriver"):
+    #     pytest.skip("Edge WebDriver not found, skipping Edge tests")
+    # if browser == "chrome" and not shutil.which("chromedriver"):
+    #     pytest.skip("Chrome WebDriver not found, skipping Chrome tests")
+    if browser == "firefox" and not shutil.which("geckodriver"):
+        pytest.skip("Firefox WebDriver not found, skipping Firefox tests")
 
-    if browser == "chrome":
-        options = ChromeOptions()
-        if headless:
-            options.add_argument("--headless=new")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            options.add_argument("--remote-debugging-port=9222")
+    # if browser == "edge":
+    #     driver = webdriver.Edge()
+    # elif browser == "chrome":
+    #     driver = webdriver.Chrome()
+    if browser == "firefox":
+        driver = webdriver.Firefox()
 
-        service = ChromeService(ChromeDriverManager().install())
-        drv = webdriver.Chrome(service=service, options=options)
-
-    elif browser == "firefox":
-        options = FirefoxOptions()
-        if headless:
-            options.add_argument("-headless")
-
-        service = FirefoxService(GeckoDriverManager().install())
-        drv = webdriver.Firefox(service=service, options=options)
-
-    drv.maximize_window()
-    drv.implicitly_wait(10)
-    yield drv
-    drv.quit()
-
-
+    driver.maximize_window()
+    driver.implicitly_wait(10)
+    yield driver
+    driver.quit()
