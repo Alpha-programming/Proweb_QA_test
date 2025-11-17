@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system packages (browser, drivers, Xvfb)
+      - name: Install system packages (Xvfb, Chromium, Chromedriver)
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb chromium-browser chromium-chromedriver
@@ -32,14 +32,10 @@ jobs:
 
       - name: Run Pytest with HTML report
         run: |
-          pytest -v \
-            --disable-warnings \
-            --maxfail=1 \
-            --html=report.html \
-            --self-contained-html
+          python -m pytest -v --html=report.html --self-contained-html
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: selenium-report
+          name: selenium-test-report
           path: report.html
